@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  competitors Competitor[]
+  alerts      Alert[]
+}
+
+model Competitor {
+  id          String   @id @default(uuid())
+  name        String   // e.g., "Nike", "Adidas"
+  website     String   // Main website URL
+  description String?  // Optional description
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  products    Product[]
+  
+  @@index([userId])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String   // Product name
+  url         String   // Product page URL
+  selector    String   // CSS selector for price element
+  imageUrl    String?  // Product image URL
+  description String?  // Product description
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  
+  priceHistory PriceHistory[]
+  alerts       Alert[]
+  
+  @@index([competitorId])
+}
+
+model PriceHistory {
+  id        String   @id @default(uuid())
+  price     Float    // Extracted price value
+  currency  String   @default("USD")
+  inStock   Boolean  @default(true)  // Track availability
+  scrapedAt DateTime @default(now())
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([productId, scrapedAt])
+}
+
+model Alert {
+  id          String   @id @default(uuid())
+  type        AlertType
+  message     String   // Alert message
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+}
+
+enum AlertType {
+  PRICE_CHANGE
+  PRICE_DROP
+  PRICE_INCREASE
+  OUT_OF_STOCK
+  BACK_IN_STOCK
+  NEW_PRODUCT
+}
