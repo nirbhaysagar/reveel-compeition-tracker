@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export interface SignUpData {
     email: string;
     password: string;
-    name: string;
+    name?: string;
 }
 
 export interface SignInData{
@@ -29,7 +29,7 @@ export class AuthService{
     }
 
     //generate JWT Token
-    static generationToken(userId: string):string {
+    static generateToken(userId: string):string {
         const secret = process.env.JWT_SECRET;
         if(!secret){
             throw new Error('JWT_SECRET is not set');
@@ -55,7 +55,7 @@ export class AuthService{
         const currentUser = await prisma.user.findUnique({
             where: {email}
         });
-        if(!currentUser){
+        if(currentUser){
             throw new Error('User already exists');
         }
 
@@ -78,7 +78,7 @@ export class AuthService{
         });
 
         //generate Token
-        const token = this.generationToken(user.id);
+        const token = this.generateToken(user.id);
 
         return{
             user,
@@ -104,16 +104,11 @@ export class AuthService{
             throw new Error('Invalid password');
         }
 
-        //generate Token
-        const token = this.generationToken(currentUser.id);
-
-        return{
-            user: currentUser,
-            token
-        };
-
         //return user data(without password)
         const  { password: _, ...userWithoutPassword } = currentUser;
+
+        //generate Token
+        const token = this.generateToken(currentUser.id);
 
         return{
             user: userWithoutPassword,

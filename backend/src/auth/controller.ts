@@ -8,7 +8,7 @@ export class AuthController{
             const {email, password, name} = req.body;
             
             //validate the input
-            if(!email || !password ||!name) {
+            if(!email || !password) {
                 return res.status(400).json({
                     success: false,
                     message: 'email and password are required'
@@ -25,18 +25,18 @@ export class AuthController{
             }
 
             //validate the password length
-            if(password.length < 8){
+            if(password.length < 6){
                 return res.status(400).json({
                     success: false,
-                    message: 'Password must be at least 8 characters long'
+                    message: 'Password must be at least 6 characters long'
                 })
             }
 
             //call the service layer
-            const result = await AuthService.signup({email, password, name});
+            const result = await AuthService.signup({email, password, name: name || ''});
 
             //send success response
-            return res.status(200).json({
+            return res.status(201).json({
                 success: true,
                 message: 'user created successfully',
                 data: result
@@ -44,9 +44,10 @@ export class AuthController{
 
 
         }catch(error){
+            console.error('Signup error:', error);
             res.status(500).json({ 
                 success: false,
-                message: 'Internal server error' });
+                message: error instanceof Error ? error.message : 'Internal server error' });
         }
     }
 
@@ -67,15 +68,16 @@ export class AuthController{
             const result = await AuthService.signin({email, password})
 
             //send success response
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
                 message: 'user logged in successfully',
                 data: result
             });
         }catch(error){
+            console.error('Signin error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Internal server error'
+                message: error instanceof Error ? error.message : 'Internal server error'
             });
         }
     }
@@ -85,7 +87,7 @@ export class AuthController{
         try{
 
             //extract the user id from the request
-            const userId = req.userId;
+            const userId = req.user?.id;
             if(!userId){
                 return res.status(401).json({
                     success: false,
@@ -94,19 +96,20 @@ export class AuthController{
             }
             
             //call service to handle errors
-            const result = await AuthService.getProfile(userId);
+            const result = await AuthService.getUserById(userId);
             
             //send success response
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
                 message: 'user profile fetched successfully',
-                data: result
+                data: { user: result }
             });
 
         }catch(error) {
+            console.error('Get profile error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Internal server error'
+                message: error instanceof Error ? error.message : 'Internal server error'
             });
         }
     }

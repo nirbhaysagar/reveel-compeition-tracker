@@ -1,10 +1,14 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './auth/routes';
+import productRoutes from './products/prod.routes';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables with explicit path
+const envPath = path.resolve(__dirname, '../.env');
+console.log('🔍 Looking for .env at:', envPath);
+dotenv.config({ path: envPath });
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -25,14 +29,22 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-//Routes
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+
+
 
 // Basic route
 app.get('/', (req: Request, res: Response) => {
   res.json({ 
     message: 'Welcome to Reveel API',
-    version: '1.0.0'
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      products: '/api/products',
+      health: '/health'
+    }
   });
 });
 

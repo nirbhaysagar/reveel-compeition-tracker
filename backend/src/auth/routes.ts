@@ -6,9 +6,9 @@ import { authMiddleware } from '../middleware/auth.Middleware';
 const router = Router();
 
 router.post('/signup', AuthController.signup);
-router.post('/signin', AuthController.signin);
+router.post('/login', AuthController.signin);
 
 //protected routes
-router.get('/profile', authMiddleware, AuthController.getProfile);
+router.get('/me', authMiddleware, AuthController.getProfile);
 
 export default router;
